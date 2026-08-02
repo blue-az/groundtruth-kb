@@ -42,6 +42,7 @@ jobs:
           path: site/
 
   deploy:
+    if: github.repository == 'Remaker-Digital/groundtruth-kb'
     needs: build
     runs-on: ubuntu-latest
     environment:

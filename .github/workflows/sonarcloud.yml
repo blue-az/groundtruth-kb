@@ -17,6 +17,7 @@ permissions:
 jobs:
   sonarcloud:
     name: SonarCloud Analysis
+    if: github.repository == 'Remaker-Digital/groundtruth-kb'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6

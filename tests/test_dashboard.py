@@ -6,9 +6,11 @@ import json
 import sqlite3
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 
 from groundtruth_kb.cli import main
+from groundtruth_kb.dashboard import _download_grafana_windows
 from groundtruth_kb.db import KnowledgeDB
 
 
@@ -96,3 +98,23 @@ def test_dashboard_start_explains_missing_grafana(runner: CliRunner, project_dir
 
     assert result.exit_code == 1
     assert "Grafana is not installed" in result.output
+
+
+def test_dashboard_download_rejects_untrusted_grafana_asset_url(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    class FakeResponse:
+        def __enter__(self) -> FakeResponse:
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+        def read(self) -> bytes:
+            return b'{"assets":[{"name":"grafana.windows-amd64.zip","browser_download_url":"file:///tmp/a.zip"}]}'
+
+    monkeypatch.setattr("groundtruth_kb.dashboard.sys.platform", "win32")
+    monkeypatch.setattr("groundtruth_kb.dashboard.urllib.request.urlopen", lambda *args, **kwargs: FakeResponse())
+
+    with pytest.raises(RuntimeError, match="unexpected asset URL"):
+        _download_grafana_windows(tmp_path)

@@ -17,6 +17,7 @@ import sqlite3
 import subprocess
 import sys
 import time
+import urllib.parse
 import urllib.request
 import zipfile
 from dataclasses import dataclass
@@ -1097,8 +1098,7 @@ def _insert_third_party_services(conn: sqlite3.Connection) -> None:
 def _download_grafana_windows(target: Path) -> None:
     if sys.platform != "win32":
         raise RuntimeError("Automatic Grafana download is currently implemented for Windows only.")
-    api_url = "https://api.github.com/repos/grafana/grafana/releases/latest"
-    with urllib.request.urlopen(api_url, timeout=30) as response:
+    with urllib.request.urlopen("https://api.github.com/repos/grafana/grafana/releases/latest", timeout=30) as response:
         release = json.loads(response.read().decode("utf-8"))
     asset_url = ""
     for asset in release.get("assets", []):
@@ -1108,8 +1108,15 @@ def _download_grafana_windows(target: Path) -> None:
             break
     if not asset_url:
         raise RuntimeError("Could not locate a Windows Grafana ZIP asset in the latest release.")
+    parsed_asset_url = urllib.parse.urlparse(asset_url)
+    if (
+        parsed_asset_url.scheme != "https"
+        or parsed_asset_url.hostname != "github.com"
+        or not parsed_asset_url.path.startswith("/grafana/grafana/releases/download/")
+    ):
+        raise RuntimeError("Grafana release API returned an unexpected asset URL.")
     zip_path = target / "grafana-windows-amd64.zip"
-    urllib.request.urlretrieve(asset_url, zip_path)
+    urllib.request.urlretrieve(asset_url, zip_path)  # nosemgrep
     with zipfile.ZipFile(zip_path) as archive:
         archive.extractall(target)
     zip_path.unlink(missing_ok=True)
