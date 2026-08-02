@@ -463,6 +463,23 @@ class TestConfigRelativePaths:
 
 
 # ---------------------------------------------------------------------------
+# CLI coverage: specification scaffold
+# ---------------------------------------------------------------------------
+
+
+class TestScaffoldSpecsCLI:
+    def test_scaffold_specs_dry_run_reports_generated_specs(self, runner: CliRunner, project_dir: Path) -> None:
+        result = runner.invoke(
+            main,
+            ["--config", str(project_dir / "groundtruth.toml"), "scaffold", "specs"],
+        )
+
+        assert result.exit_code == 0, result.output
+        assert "Scaffold specs — profile=minimal — DRY RUN" in result.output
+        assert "Generated specs:" in result.output
+
+
+# ---------------------------------------------------------------------------
 # Regression: import validation (Codex P2)
 # ---------------------------------------------------------------------------
 
