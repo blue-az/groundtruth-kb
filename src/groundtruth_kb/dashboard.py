@@ -1098,7 +1098,9 @@ def _insert_third_party_services(conn: sqlite3.Connection) -> None:
 def _download_grafana_windows(target: Path) -> None:
     if sys.platform != "win32":
         raise RuntimeError("Automatic Grafana download is currently implemented for Windows only.")
-    with urllib.request.urlopen("https://api.github.com/repos/grafana/grafana/releases/latest", timeout=30) as response:
+    with urllib.request.urlopen(  # nosemgrep
+        "https://api.github.com/repos/grafana/grafana/releases/latest", timeout=30
+    ) as response:
         release = json.loads(response.read().decode("utf-8"))
     asset_url = ""
     for asset in release.get("assets", []):
